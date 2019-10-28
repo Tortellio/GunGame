@@ -4,66 +4,66 @@ using Rocket.Core.Plugins;
 using SDG.Unturned;
 using Rocket.Unturned.Player;
 using UnityEngine;
-using Rocket.Core.Logging;
 using Rocket.Unturned.Chat;
 using System.IO;
 using Rocket.Unturned;
 using Steamworks;
 using System.Xml;
-using Rocket.API.Collections;
 using Rocket.Core.Commands;
 using Rocket.API;
 using System.Security.Cryptography;
+using Logger = Rocket.Core.Logging.Logger;
+using Math = System.Math;
 
 namespace NightFish.GunGame
 {
     public class GunGame : RocketPlugin
     {
-        float EastWall = 50;
-        float WestWall = -50;
-        float NorthWall = 50;
-        float SouthWall = -50;
+        public float EastWall = 50;
+        public float WestWall = -50;
+        public float NorthWall = 50;
+        public float SouthWall = -50;
 
-        float WallEndY = 80;
-        float WallStartY = 30;
+        public float WallEndY = 80;
+        public float WallStartY = 30;
 
-        ushort WallBarricade = 1091;
+        public ushort WallBarricade = 1091;
 
-        double WallBarricadeWidth = 3.75;
-        double WallBarricadeHeight = 3.75;
+        public double WallBarricadeWidth = 3.75;
+        public double WallBarricadeHeight = 3.75;
 
-        bool disableClearing = false;
-        bool disableWallGen = false;
-        bool disableUnstick = false;
+        public bool disableClearing = false;
+        public bool disableWallGen = false;
+        public bool disableUnstick = false;
 
-        bool DisableGungame = false;
-        bool DedicatedMode = true;
+        public bool DisableGungame = false;
+        public bool DedicatedMode = true;
 
-        bool UseRandomOrder = true;
+        public bool UseRandomOrder = true;
 
-        bool UseCustomSpawns = false;
+        public bool UseCustomSpawns = true;
 
-        int UnstickDelay = 10;
-        int UnstickCooldown = 120;
+        public int UnstickDelay = 10;
+        public int UnstickCooldown = 120;
 
-        int ResetDelay = 30;
+        public int ResetDelay = 30;
 
-        int MagRemoveCount = 0;
+        public int MagRemoveCount = 0;
 
-        bool error = false;
+        public bool error = false;
 
         List<int> weapons = new List<int>() { 107, 1021, 99, 1039, 448, 1369, 1379, 1041, 116, 1024, 1377, 484, 1000, 363, 1375, 122, 1362, 297, 1382, 112, 132, 1364 };
 
-        Dictionary<ulong, int> gungameLevels = new Dictionary<ulong, int>();
-        Dictionary<ulong, int> killstreak = new Dictionary<ulong, int>();
-        Dictionary<ulong, DateTime> OP = new Dictionary<ulong, DateTime>();
-        List<ulong> OPPlayers = new List<ulong>();
+        public Dictionary<ulong, int> gungameLevels = new Dictionary<ulong, int>();
+        public Dictionary<ulong, int> killstreak = new Dictionary<ulong, int>();
+        public Dictionary<ulong, DateTime> OP = new Dictionary<ulong, DateTime>();
+        public List<ulong> OPPlayers = new List<ulong>();
         List<int> WeaponList = new List<int>();
-        Dictionary<ulong, Vector3> RespawnList = new Dictionary<ulong, Vector3>();
-        Dictionary<ulong, DateTime> UnstickList = new Dictionary<ulong, DateTime>();
-        Dictionary<ulong, DateTime> UnstickCooldownList = new Dictionary<ulong, DateTime>();
-        Dictionary<string, Vector3> CustomSpawns = new Dictionary<string, Vector3>();
-        Dictionary<string, string[]> DFTranslations = new Dictionary<string, string[]>();
+        public Dictionary<ulong, Vector3> RespawnList = new Dictionary<ulong, Vector3>();
+        public Dictionary<ulong, DateTime> UnstickList = new Dictionary<ulong, DateTime>();
+        public Dictionary<ulong, DateTime> UnstickCooldownList = new Dictionary<ulong, DateTime>();
+        public Dictionary<string, Vector3> CustomSpawns = new Dictionary<string, Vector3>();
+        public Dictionary<string, string[]> DFTranslations = new Dictionary<string, string[]>();
 
         DateTime ResetTime = DateTime.Now.AddMinutes(30);
         bool ResetOnTime = false;
@@ -119,21 +119,21 @@ namespace NightFish.GunGame
         {
             hex = hex.ToUpper();
             hex = hex.Replace("#", "");
-            char[] validChars = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' }; 
-            if(hex.Length == 6 || hex.Length == 3)
+            char[] validChars = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+            if (hex.Length == 6 || hex.Length == 3)
             {
-                foreach(char c in hex)
+                foreach (char c in hex)
                 {
                     bool valid = false;
-                    foreach(char v in validChars)
+                    foreach (char v in validChars)
                     {
-                        if(v == c)
+                        if (v == c)
                         {
                             valid = true;
                         }
                     }
 
-                    if(!valid)
+                    if (!valid)
                     {
                         return false;
                     }
@@ -148,15 +148,15 @@ namespace NightFish.GunGame
 
         public Color HexToColor(string hex)
         {
-            if(ValidHex(hex))
+            if (ValidHex(hex))
             {
-                string red = "00";
-                string green = "00";
-                string blue = "00";
+                string red;
+                string green;
+                string blue;
 
-                int r = 0;
-                int g = 0;
-                int b = 0;
+                int r;
+                int g;
+                int b;
 
                 if (hex.Length == 3)
                 {
@@ -178,16 +178,16 @@ namespace NightFish.GunGame
             }
             else
             {
-                Logger.LogWarning("Invalid hex color: " + hex);
+                Logger.LogWarning("Invalid hex Color: " + hex);
                 return Color.white;
             }
         }
 
-        public string ColorToHex(Color color)
+        public string ColorToHex(Color Color)
         {
-            int r = Convert.ToInt32(color.r * 255 * color.a);
-            int g = Convert.ToInt32(color.g * 255 * color.a);
-            int b = Convert.ToInt32(color.b * 255 * color.a);
+            int r = Convert.ToInt32(Color.r * 255 * Color.a);
+            int g = Convert.ToInt32(Color.g * 255 * Color.a);
+            int b = Convert.ToInt32(Color.b * 255 * Color.a);
             string red = r.ToString("X");
             string green = g.ToString("X");
             string blue = b.ToString("X");
@@ -204,14 +204,17 @@ namespace NightFish.GunGame
         {
             if (File.Exists(@"plugins\gungame\GunGameConfig.xml"))
                 File.Delete(@"plugins\gungame\GunGameConfig.xml");
-            XmlWriterSettings xset = new XmlWriterSettings();
-            xset.Indent = true;
-            xset.NewLineOnAttributes = true;
+            XmlWriterSettings xset = new XmlWriterSettings
+            {
+                Indent = true,
+                NewLineOnAttributes = true
+            };
 
             using (XmlWriter writer = XmlWriter.Create(@"plugins\gungame\GunGameConfig.xml", xset))
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement("GunGameConfiguration");
+                writer.WriteElementString("DedicatedMode", DedicatedMode.ToString());
                 writer.WriteElementString("TimeBetweenRounds", ResetDelay.ToString());
                 writer.WriteStartElement("Border");
                 writer.WriteComment("North wall must be bigger than South wall!");
@@ -271,9 +274,11 @@ namespace NightFish.GunGame
         {
             if (File.Exists(@"plugins\gungame\GunGameTranslations.xml"))
                 File.Delete(@"plugins\gungame\GunGameTranslations.xml");
-            XmlWriterSettings xset = new XmlWriterSettings();
-            xset.Indent = true;
-            xset.NewLineOnAttributes = true;
+            XmlWriterSettings xset = new XmlWriterSettings
+            {
+                Indent = true,
+                NewLineOnAttributes = true
+            };
 
             using (XmlWriter writer = XmlWriter.Create(@"plugins\gungame\GunGameTranslations.xml", xset))
             {
@@ -313,6 +318,13 @@ namespace NightFish.GunGame
                         {
                             switch (reader.Name)
                             {
+                                case "DedicatedMode":
+                                    if (reader.Read())
+                                    {
+                                        Logger.Log("Dedicated Mode: " + reader.Value.Trim());
+                                        DedicatedMode = Convert.ToBoolean(reader.Value.Trim());
+                                    }
+                                    break;
                                 case "WestWall":
                                     if (reader.Read())
                                     {
@@ -503,8 +515,8 @@ namespace NightFish.GunGame
 
         public void LoadTranslation()
         {
-            if (File.Exists(@"plugins\gungame\GunGame.en.translation.xml"))
-                File.Delete(@"plugins\gungame\GunGame.en.translation.xml");
+            if (File.Exists(@"plugins\gungame\GunGame.en.Translation.xml"))
+                File.Delete(@"plugins\gungame\GunGame.en.Translation.xml");
             if (!File.Exists(@"plugins\gungame\GunGameTranslations.xml"))
             {
                 SaveTranslation();
@@ -537,17 +549,17 @@ namespace NightFish.GunGame
                                 case "Color":
                                     if (reader.Read())
                                     {
-                                        string col = Convert.ToString(reader.Value.Trim());
-                                        Color c = Color.white; 
-                                        if (ValidHex(col))
+                                        string Col = Convert.ToString(reader.Value.Trim());
+                                        Color c = Color.white;
+                                        if (ValidHex(Col))
                                         {
-                                            c = HexToColor(col);
-                                            Logger.Log("Translation loaded: " + CurrentKey + " with color: " + col);
-                                            addTra(CurrentKey, CurrentText, c);
+                                            c = HexToColor(Col);
+                                            Logger.Log("Translation loaded: " + CurrentKey + " with Color: " + Col);
+                                            AddTra(CurrentKey, CurrentText, c);
                                         }
                                         else
                                         {
-                                            Logger.LogError("Invalid hex color for: " + CurrentKey);
+                                            Logger.LogError("Invalid hex Color for: " + CurrentKey);
                                         }
                                     }
                                     break;
@@ -556,23 +568,23 @@ namespace NightFish.GunGame
                     }
                 }
 
-                SaveTranslation(); //Used to fix old translation files
+                SaveTranslation(); //Used to fix old Translation files
             }
         }
 
-        public void addTra(string ID, string Text, Color color)
+        public void AddTra(string ID, string Text, Color Color)
         {
             if (DFTranslations.ContainsKey(ID))
             {
-                DFTranslations[ID] = new string[] { Text, ColorToHex(color) };
+                DFTranslations[ID] = new string[] { Text, ColorToHex(Color) };
             }
             else
             {
-                DFTranslations.Add(ID, new string[] { Text, ColorToHex(color) });
+                DFTranslations.Add(ID, new string[] { Text, ColorToHex(Color) });
             }
         }
 
-        public string tra(string ID, params object[] Parameters)
+        public string Tra(string ID, params object[] Parameters)
         {
             try
             {
@@ -582,12 +594,12 @@ namespace NightFish.GunGame
             }
             catch
             {
-                Logger.LogError(ID + " not found in translation!");
+                Logger.LogError(ID + " not found in Translation!");
                 return "";
             }
         }
 
-        public Color col(string ID)
+        public Color Col(string ID)
         {
             if (ValidHex(DFTranslations[ID][1]))
             {
@@ -595,7 +607,7 @@ namespace NightFish.GunGame
             }
             else
             {
-                Logger.LogError("Error parsing color: " + DFTranslations[ID][1] + " For: " + ID);
+                Logger.LogError("Error parsing Color: " + DFTranslations[ID][1] + " For: " + ID);
                 return Color.green;
             }
         }
@@ -609,7 +621,7 @@ namespace NightFish.GunGame
             Rocket.Unturned.Events.UnturnedPlayerEvents.OnPlayerDeath += PlayerDeath;
             Rocket.Unturned.Events.UnturnedPlayerEvents.OnPlayerRevive += PlayerRespawn;
             U.Events.OnPlayerConnected += PlayerJoin;
-            
+
             GenerateWeaponList();
             gungameLevels.Clear();
             killstreak.Clear();
@@ -694,13 +706,12 @@ namespace NightFish.GunGame
                 {
                     UnturnedPlayer killer = UnturnedPlayer.FromCSteamID(murderer);
 
-                    int ks = 0;
-                    if (killstreak.TryGetValue(player.CSteamID.m_SteamID, out ks))
+                    if (killstreak.TryGetValue(player.CSteamID.m_SteamID, out int ks))
                     {
                         if (ks > 3)
                         {
                             killstreak.Remove(player.CSteamID.m_SteamID);
-                            UnturnedChat.Say(tra("KILLSTREAK_END", killer.DisplayName, player.DisplayName, ks), col("KILLSTREAK_END"));
+                            UnturnedChat.Say(Tra("KILLSTREAK_END", killer.DisplayName, player.DisplayName, ks), Col("KILLSTREAK_END"));
                         }
                     }
 
@@ -716,7 +727,7 @@ namespace NightFish.GunGame
                         if (!OP.ContainsKey(killer.CSteamID.m_SteamID))
                         {
                             OP.Add(killer.CSteamID.m_SteamID, DateTime.Now.AddSeconds(5));
-                            UnturnedChat.Say(tra("KILLSTREAK", killer.DisplayName, ks.ToString()), col("KILLSTREAK"));
+                            UnturnedChat.Say(Tra("KILLSTREAK", killer.DisplayName, ks.ToString()), Col("KILLSTREAK"));
                         }
                     }
                     else if (ks == 4)
@@ -724,7 +735,7 @@ namespace NightFish.GunGame
                         if (!OP.ContainsKey(killer.CSteamID.m_SteamID))
                         {
                             OP.Add(killer.CSteamID.m_SteamID, DateTime.Now.AddSeconds(10));
-                            UnturnedChat.Say(tra("KILLSTREAK", killer.DisplayName, ks.ToString()), col("KILLSTREAK"));
+                            UnturnedChat.Say(Tra("KILLSTREAK", killer.DisplayName, ks.ToString()), Col("KILLSTREAK"));
                         }
                     }
                     else if (ks == 9)
@@ -732,7 +743,7 @@ namespace NightFish.GunGame
                         if (!OP.ContainsKey(killer.CSteamID.m_SteamID))
                         {
                             OP.Add(killer.CSteamID.m_SteamID, DateTime.Now.AddSeconds(20));
-                            UnturnedChat.Say(tra("KILLSTREAK", killer.DisplayName, ks.ToString()), col("KILLSTREAK"));
+                            UnturnedChat.Say(Tra("KILLSTREAK", killer.DisplayName, ks.ToString()), Col("KILLSTREAK"));
                         }
                     }
                     else if (ks == 19)
@@ -740,7 +751,7 @@ namespace NightFish.GunGame
                         if (!OP.ContainsKey(killer.CSteamID.m_SteamID))
                         {
                             OP.Add(killer.CSteamID.m_SteamID, DateTime.Now.AddSeconds(60));
-                            UnturnedChat.Say(tra("KILLSTREAK", killer.DisplayName, ks.ToString()), col("KILLSTREAK"));
+                            UnturnedChat.Say(Tra("KILLSTREAK", killer.DisplayName, ks.ToString()), Col("KILLSTREAK"));
                         }
                     }
 
@@ -752,11 +763,11 @@ namespace NightFish.GunGame
                     catch { }
                     gungameLevels.Remove(killer.CSteamID.m_SteamID);
                     gungameLevels.Add(killer.CSteamID.m_SteamID, pastLevel + 1);
-                    UnturnedChat.Say(tra("PLAYER_KILL", killer.DisplayName, player.DisplayName), col("PLAYER_KILL"));
+                    UnturnedChat.Say(Tra("PLAYER_KILL", killer.DisplayName, player.DisplayName), Col("PLAYER_KILL"));
                     if (cause == EDeathCause.MELEE)
                     {
                         killer.Heal(50);
-                        UnturnedChat.Say(tra("LVL_STEAL", killer.DisplayName, player.DisplayName), col("LVL_STEAL"));
+                        UnturnedChat.Say(Tra("LVL_STEAL", killer.DisplayName, player.DisplayName), Col("LVL_STEAL"));
                         int pastDeathLevel = 0;
                         try
                         {
@@ -796,12 +807,11 @@ namespace NightFish.GunGame
                 return;
             if (UseCustomSpawns)
             {
-                Vector3 pos = new Vector3(0, 0, 0);
                 int index = Rand(0, CustomSpawns.Count);
                 int i = 0;
-                foreach(KeyValuePair<string, Vector3> kvp in CustomSpawns)
+                foreach (KeyValuePair<string, Vector3> kvp in CustomSpawns)
                 {
-                    if(i == index)
+                    if (i == index)
                     {
                         RespawnList.Add(player.CSteamID.m_SteamID, kvp.Value);
                     }
@@ -809,7 +819,7 @@ namespace NightFish.GunGame
                 }
             }
             else
-            { 
+            {
                 System.Random r = new System.Random(DateTime.Now.Millisecond);
                 int x = r.Next((int)WestWall, (int)EastWall);
                 int z = r.Next((int)SouthWall, (int)NorthWall);
@@ -824,7 +834,7 @@ namespace NightFish.GunGame
             catch
             { }
             player.GiveItem(new Item(121, true));
-            UnturnedChat.Say(player, tra("LVL_CHANGE", (playerLevel + 1)), col("LVL_CHANGE"));
+            UnturnedChat.Say(player, Tra("LVL_CHANGE", (playerLevel + 1)), Col("LVL_CHANGE"));
         }
 
         public void PlayerJoin(UnturnedPlayer player)
@@ -836,7 +846,6 @@ namespace NightFish.GunGame
 
             if (UseCustomSpawns)
             {
-                Vector3 pos = new Vector3(0, 0, 0);
                 int index = Rand(0, CustomSpawns.Count);
                 int i = 0;
                 foreach (KeyValuePair<string, Vector3> kvp in CustomSpawns)
@@ -844,7 +853,7 @@ namespace NightFish.GunGame
                     if (i == index)
                     {
                         try
-                        { 
+                        {
                             RespawnList.Add(player.CSteamID.m_SteamID, kvp.Value);
                         }
                         catch { }
@@ -858,19 +867,19 @@ namespace NightFish.GunGame
                 int x = r.Next((int)WestWall, (int)EastWall);
                 int z = r.Next((int)SouthWall, (int)NorthWall);
                 try
-                { 
+                {
                     RespawnList.Add(player.CSteamID.m_SteamID, new Vector3(x, -10, z));
                 }
                 catch { }
             }
-/*
-            int playerLevel = 0;
-            try
-            {
-                playerLevel = gungameLevels[player.CSteamID.m_SteamID];
-            }
-            catch
-            { }*/
+            /*
+                        int playerLevel = 0;
+                        try
+                        {
+                            playerLevel = gungameLevels[player.CSteamID.m_SteamID];
+                        }
+                        catch
+                        { }*/
         }
 
         public void GenerateWeaponList()
@@ -878,11 +887,11 @@ namespace NightFish.GunGame
             if (error)
                 return;
             WeaponList = weapons;
-            if(UseRandomOrder)
+            if (UseRandomOrder)
                 WeaponList.Shuffle();
 
             Console.ForegroundColor = ConsoleColor.DarkMagenta;
-            Console.WriteLine(tra("WP_LIST_GEN"));
+            Console.WriteLine(Tra("WP_LIST_GEN"));
             Console.ForegroundColor = ConsoleColor.White;
         }
 
@@ -894,14 +903,14 @@ namespace NightFish.GunGame
             {
                 BarricadeManager.askClearAllBarricades();
                 StructureManager.askClearAllStructures();
-                Logger.LogWarning(tra("BARRIC_CLR"));
-                Logger.LogWarning(tra("STRUCT_CLR"));
+                Logger.LogWarning(Tra("BARRIC_CLR"));
+                Logger.LogWarning(Tra("STRUCT_CLR"));
             }
             if (!disableWallGen)
             {
                 Barricade b = new Barricade(WallBarricade);
                 Transform tr = new GameObject().transform;
-                Vector3 pos = new Vector3(0, 100, 0);
+                Vector3 pos;
                 for (float y = WallStartY; y < WallEndY; y += (float)WallBarricadeHeight)
                 {
                     for (float z = SouthWall; z < NorthWall + WallBarricadeWidth; z += (float)WallBarricadeWidth)
@@ -919,11 +928,11 @@ namespace NightFish.GunGame
                         BarricadeManager.dropBarricade(b, tr, pos, 0, 0, 0, 000, 000);
                     }
                 }
-                Logger.LogWarning(tra("WALL_REBUILD"));
+                Logger.LogWarning(Tra("WALL_REBUILD"));
             }
             else
             {
-                Logger.LogWarning(tra("WALL_REBUILD_DISABLED"));
+                Logger.LogWarning(Tra("WALL_REBUILD_DISABLED"));
             }
         }
 
@@ -934,12 +943,12 @@ namespace NightFish.GunGame
             ResetTime = DateTime.Now.AddMinutes(30);
             Winner = 0;
             GameOver = false;
-            UnturnedChat.Say(tra("GAME_RESET_START"), col("GAME_RESET_START"));
-            Logger.LogWarning(tra("GAME_RESET_LOG"));
+            UnturnedChat.Say(Tra("GAME_RESET_START"), Col("GAME_RESET_START"));
+            Logger.LogWarning(Tra("GAME_RESET_LOG"));
             gungameLevels.Clear();
             killstreak.Clear();
             OP.Clear();
-            Logger.LogWarning(tra("LVL_RESET"));
+            Logger.LogWarning(Tra("LVL_RESET"));
             foreach (SteamPlayer sp in Provider.clients)
             {
                 try
@@ -954,14 +963,14 @@ namespace NightFish.GunGame
                 }
                 catch { }
             }
-            Logger.LogWarning(tra("VEH_KICK"));
-            Logger.LogWarning(tra("ITEM_CLR"));
+            Logger.LogWarning(Tra("VEH_KICK"));
+            Logger.LogWarning(Tra("ITEM_CLR"));
             RebuildWall();
             VehicleManager.askVehicleDestroyAll();
-            Logger.LogWarning(tra("VEH_CLR"));
+            Logger.LogWarning(Tra("VEH_CLR"));
             GenerateWeaponList();
-            UnturnedChat.Say(tra("ROUND_START"), col("ROUND_START"));
-            UnturnedChat.Say(tra("LVL_CHANGE", 1), col("LVL_CHANGE"));
+            UnturnedChat.Say(Tra("ROUND_START"), Col("ROUND_START"));
+            UnturnedChat.Say(Tra("LVL_CHANGE", 1), Col("LVL_CHANGE"));
             int seed = 0;
             foreach (SteamPlayer sp in Provider.clients)
             {
@@ -990,8 +999,8 @@ namespace NightFish.GunGame
                     int x = r.Next((int)WestWall, (int)EastWall);
                     int z = r.Next((int)SouthWall, (int)NorthWall);
                     try
-                    { 
-                    RespawnList.Add(player.CSteamID.m_SteamID, new Vector3(x, -10, z));
+                    {
+                        RespawnList.Add(player.CSteamID.m_SteamID, new Vector3(x, 50, z));
                     }
                     catch { }
                 }
@@ -1055,7 +1064,7 @@ namespace NightFish.GunGame
             player.SetSkillLevel(Rocket.Unturned.Skills.UnturnedSkill.Cardio, 0);
         }
 
-        void FixedUpdate()
+        public void FixedUpdate()
         {
             if (error || DisableGungame)
                 return;
@@ -1063,9 +1072,9 @@ namespace NightFish.GunGame
             {
                 List<ulong> deleteList = new List<ulong>();
                 int seed = 0;
-                foreach(KeyValuePair<ulong, DateTime> unstickers in UnstickList)
+                foreach (KeyValuePair<ulong, DateTime> unstickers in UnstickList)
                 {
-                    if(unstickers.Value < DateTime.Now)
+                    if (unstickers.Value < DateTime.Now)
                     {
                         UnturnedPlayer player = UnturnedPlayer.FromCSteamID(new CSteamID(unstickers.Key));
                         if (UseCustomSpawns)
@@ -1089,7 +1098,7 @@ namespace NightFish.GunGame
                             int z = r.Next((int)SouthWall, (int)NorthWall);
                             RespawnList.Add(player.CSteamID.m_SteamID, new Vector3(x, -10, z));
                         }
-                        UnturnedChat.Say(player, tra("UNSTUCK"), col("UNSTUCK"));
+                        UnturnedChat.Say(player, Tra("UNSTUCK"), Col("UNSTUCK"));
                         deleteList.Add(unstickers.Key);
                         seed++;
                     }
@@ -1168,7 +1177,7 @@ namespace NightFish.GunGame
                             }
                             catch (Exception e)
                             {
-                                Logger.Log(tra("INV_ERR", player.CharacterName, e.Message));
+                                Logger.Log(Tra("INV_ERR", player.CharacterName, e.Message));
                             }
                         }
                     }
@@ -1215,7 +1224,7 @@ namespace NightFish.GunGame
                         if (!OPPlayers.Contains(_op.Key))
                         {
                             OPPlayers.Add(_op.Key);
-                            UnturnedChat.Say(tra("GAIN_OP", UnturnedPlayer.FromCSteamID(new CSteamID(_op.Key)).DisplayName), col("GAIN_OP"));
+                            UnturnedChat.Say(Tra("GAIN_OP", UnturnedPlayer.FromCSteamID(new CSteamID(_op.Key)).DisplayName), Col("GAIN_OP"));
                         }
                     }
                 }
@@ -1223,7 +1232,7 @@ namespace NightFish.GunGame
                 foreach (ulong u in deleteOP)
                 {
                     OP.Remove(u);
-                    UnturnedChat.Say(tra("LOST_OP", UnturnedPlayer.FromCSteamID(new CSteamID(u)).DisplayName), col("LOST_OP"));
+                    UnturnedChat.Say(Tra("LOST_OP", UnturnedPlayer.FromCSteamID(new CSteamID(u)).DisplayName), Col("LOST_OP"));
                 }
 
                 deleteOP.Clear();
@@ -1239,7 +1248,7 @@ namespace NightFish.GunGame
                 foreach (ulong u in deleteOP)
                 {
                     OPPlayers.Remove(u);
-                    UnturnedChat.Say(tra("LOST_OP", UnturnedPlayer.FromCSteamID(new CSteamID(u)).DisplayName), col("LOST_OP"));
+                    UnturnedChat.Say(Tra("LOST_OP", UnturnedPlayer.FromCSteamID(new CSteamID(u)).DisplayName), Col("LOST_OP"));
                 }
 
                 foreach (SteamPlayer sp in Provider.clients)
@@ -1315,12 +1324,12 @@ namespace NightFish.GunGame
                                 {
                                     BarricadeManager.askClearAllBarricades();
                                     StructureManager.askClearAllStructures();
-                                    Logger.LogWarning(tra("BARRIC_CLR"));
-                                    Logger.LogWarning(tra("STRUCT_CLR"));
+                                    Logger.LogWarning(Tra("BARRIC_CLR"));
+                                    Logger.LogWarning(Tra("STRUCT_CLR"));
                                 }
                                 Winner = player.CSteamID.m_SteamID;
-                                UnturnedChat.Say(tra("GAME_WIN", player.DisplayName), col("GAME_WIN"));
-                                UnturnedChat.Say(tra("ROUND_END"), col("ROUND_END"));
+                                UnturnedChat.Say(Tra("GAME_WIN", player.DisplayName), Col("GAME_WIN"));
+                                UnturnedChat.Say(Tra("ROUND_END"), Col("ROUND_END"));
                             }
                             else
                             {
@@ -1328,10 +1337,10 @@ namespace NightFish.GunGame
                                 {
                                     GameOver = true;
                                     Winner = player.CSteamID.m_SteamID;
-                                    UnturnedChat.Say(tra("GAME_WIN", player.DisplayName), col("GAME_WIN"));
+                                    UnturnedChat.Say(Tra("GAME_WIN", player.DisplayName), Col("GAME_WIN"));
                                     ResetTime = DateTime.Now.AddSeconds(ResetDelay);
                                     ResetOnTime = true;
-                                    UnturnedChat.Say(tra("GAME_RESET", ResetDelay.ToString()), col("GAME_RESET"));
+                                    UnturnedChat.Say(Tra("GAME_RESET", ResetDelay.ToString()), Col("GAME_RESET"));
                                 }
                             }
                         }
@@ -1366,7 +1375,7 @@ namespace NightFish.GunGame
                                     if (player.Inventory.getItem(0, 0).item.id != LevelGun)
                                     {
                                         player.Inventory.removeItem(0, 0);
-                                        UnturnedChat.Say(player, tra("LVL_CHANGE", PlayerLevel + 1), col("LVL_CHANGE"));
+                                        UnturnedChat.Say(player, Tra("LVL_CHANGE", PlayerLevel + 1), Col("LVL_CHANGE"));
                                     }
                                 }
                                 else
@@ -1378,6 +1387,7 @@ namespace NightFish.GunGame
 
                             try
                             {
+
                                 ItemGunAsset currentWeapon = (ItemGunAsset)player.Player.equipment.asset;
                                 if (player.Player.equipment.asset != null && currentWeapon != null)
                                 {
@@ -1385,10 +1395,10 @@ namespace NightFish.GunGame
                                     {
                                         MagRemoveCount = 0;
                                     }
-                                    player.Inventory.tryAddItem(new Item(currentWeapon.magazineID, true), 0, 0, 2, 0);
+                                    player.Inventory.tryAddItem(new Item(currentWeapon.getMagazineID(), true), 0, 0, 2, 0);
                                 }
 
-                                if (player.Inventory.getItem(2, 0).item.id != currentWeapon.magazineID)
+                                if (player.Inventory.getItem(2, 0).item.id != currentWeapon.getMagazineID())
                                 {
                                     player.Inventory.removeItem(2, 0);
                                 }
@@ -1440,7 +1450,7 @@ namespace NightFish.GunGame
             }
             catch (Exception e)
             {
-                Logger.Log(tra("INV_ERR", player.CharacterName, e.Message));
+                Logger.Log(Tra("INV_ERR", player.CharacterName, e.Message));
             }
         }
 
@@ -1488,7 +1498,7 @@ namespace NightFish.GunGame
             }
             catch (Exception e)
             {
-                Logger.Log(tra("INV_ERR", player.CharacterName, e.Message));
+                Logger.Log(Tra("INV_ERR", player.CharacterName, e.Message));
             }
         }
 
@@ -1500,9 +1510,9 @@ namespace NightFish.GunGame
         [RocketCommandAlias("ew")]
         public void ExecuteCommandMaxx(IRocketPlayer caller, string[] parameters)
         {
-            if(DisableGungame)
+            if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1534,7 +1544,7 @@ namespace NightFish.GunGame
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1565,7 +1575,7 @@ namespace NightFish.GunGame
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1596,7 +1606,7 @@ namespace NightFish.GunGame
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1624,11 +1634,11 @@ namespace NightFish.GunGame
         #endregion
 
         [RocketCommand("op", "", "", AllowedCaller.Player)] //makes the caller have the OP status in game
-        public void ExecuteCommandOP(IRocketPlayer caller, string[] parameters)
+        public void ExecuteCommandOP(IRocketPlayer caller)
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1639,11 +1649,11 @@ namespace NightFish.GunGame
         }
 
         [RocketCommand("lvld", "Removes a level", "", AllowedCaller.Player)] //decreases gun game level of caller
-        public void ExecuteCommandL(IRocketPlayer caller, string[] parameters)
+        public void ExecuteCommandL(IRocketPlayer caller)
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1660,11 +1670,11 @@ namespace NightFish.GunGame
         }
 
         [RocketCommand("lvlu", "Gives a level.", "", AllowedCaller.Player)] //increases gun game level of caller
-        public void ExecuteuommandK(IRocketPlayer caller, string[] parameters)
+        public void ExecuteuommandK(IRocketPlayer caller)
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1680,11 +1690,11 @@ namespace NightFish.GunGame
         }
 
         [RocketCommand("reset", "Reset the gungame server", "", AllowedCaller.Both)] //resets the gun game
-        public void ExecuteCommandReset(IRocketPlayer caller, string[] parameters)
+        public void ExecuteCommandReset(IRocketPlayer caller)
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1692,11 +1702,11 @@ namespace NightFish.GunGame
         }
 
         [RocketCommand("unstick", "Respawns a player if they are stuck", "", AllowedCaller.Player)] //kills player if they are stuck somewhere
-        public void ExecuteCommandUnstick(IRocketPlayer caller, string[] parameters)
+        public void ExecuteCommandUnstick(IRocketPlayer caller)
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
@@ -1707,16 +1717,16 @@ namespace NightFish.GunGame
                 {
                     UnstickList.Add(player.CSteamID.m_SteamID, DateTime.Now.AddSeconds(UnstickDelay));
                     UnstickCooldownList.Add(player.CSteamID.m_SteamID, DateTime.Now.AddSeconds(UnstickCooldown));
-                    UnturnedChat.Say(caller, tra("UNSTICKING", UnstickDelay), col("UNSTICKING"));
+                    UnturnedChat.Say(caller, Tra("UNSTICKING", UnstickDelay), Col("UNSTICKING"));
                 }
                 else
                 {
-                    UnturnedChat.Say(caller, tra("UNSTICK_COOLDOWN", Math.Round((UnstickCooldownList[player.CSteamID.m_SteamID] - DateTime.Now).TotalSeconds)), col("UNSTICK_COOLDOWN"));
+                    UnturnedChat.Say(caller, Tra("UNSTICK_COOLDOWN", Math.Round((UnstickCooldownList[player.CSteamID.m_SteamID] - DateTime.Now).TotalSeconds)), Col("UNSTICK_COOLDOWN"));
                 }
             }
             else
             {
-                UnturnedChat.Say(caller, tra("NO_UNSTICK"), col("NO_UNSTICK"));
+                UnturnedChat.Say(caller, Tra("NO_UNSTICK"), Col("NO_UNSTICK"));
             }
         }
 
@@ -1726,25 +1736,25 @@ namespace NightFish.GunGame
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
             if (parameters.Length != 1)
             {
-                UnturnedChat.Say(caller, tra("SPAWN_ADD_ERR_NAME"), col("SPAWN_ADD_ERR_NAME"));
+                UnturnedChat.Say(caller, Tra("SPAWN_ADD_ERR_NAME"), Col("SPAWN_ADD_ERR_NAME"));
             }
             else
             {
                 if (CustomSpawns.ContainsKey(parameters[0]))
                 {
-                    UnturnedChat.Say(caller, tra("SPAWN_ADD_ERR_EXISTS"), col("SPAWN_ADD_ERR_EXISTS"));
+                    UnturnedChat.Say(caller, Tra("SPAWN_ADD_ERR_EXISTS"), Col("SPAWN_ADD_ERR_EXISTS"));
                 }
                 else
                 {
                     Vector3 p = ((UnturnedPlayer)caller).Position;
                     CustomSpawns.Add(parameters[0], p);
-                    UnturnedChat.Say(caller, tra("SPAWN_ADD", p.x, p.y, p.z, parameters[0]), col("SPAWN_ADD"));
+                    UnturnedChat.Say(caller, Tra("SPAWN_ADD", p.x, p.y, p.z, parameters[0]), Col("SPAWN_ADD"));
                     SaveConfig();
                 }
             }
@@ -1757,24 +1767,24 @@ namespace NightFish.GunGame
         {
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DISABLED"), col("GUNGAME_DISABLED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DISABLED"), Col("GUNGAME_DISABLED"));
                 return;
             }
 
             if (parameters.Length != 1)
             {
-                UnturnedChat.Say(caller, tra("SPAWN_DEL_ERR_NAME"), col("SPAWN_DEL_ERR_NAME"));
+                UnturnedChat.Say(caller, Tra("SPAWN_DEL_ERR_NAME"), Col("SPAWN_DEL_ERR_NAME"));
             }
             else
             {
                 if (!CustomSpawns.ContainsKey(parameters[0]))
                 {
-                    UnturnedChat.Say(caller, tra("SPAWN_DEL_ERR_EXISTS"), col("SPAWN_DEL_ERR_EXISTS"));
+                    UnturnedChat.Say(caller, Tra("SPAWN_DEL_ERR_EXISTS"), Col("SPAWN_DEL_ERR_EXISTS"));
                 }
                 else
                 {
                     CustomSpawns.Remove(parameters[0]);
-                    UnturnedChat.Say(caller, tra("SPAWN_DEL", parameters[0]), col("SPAWN_DEL"));
+                    UnturnedChat.Say(caller, Tra("SPAWN_DEL", parameters[0]), Col("SPAWN_DEL"));
                     SaveConfig();
                 }
             }
@@ -1782,21 +1792,21 @@ namespace NightFish.GunGame
 
         [RocketCommandAlias("ggstart")]
         [RocketCommand("gungamestart", "Starts a non-dedicated Gun Game round", "", AllowedCaller.Both)] //Starts a non-dedicated Gun Game round
-        public void ExecuteCommandGungamestart(IRocketPlayer caller, string[] parameters)
+        public void ExecuteCommandGungamestart(IRocketPlayer caller)
         {
             if (DedicatedMode)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DEDICATED"), col("GUNGAME_DEDICATED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DEDICATED"), Col("GUNGAME_DEDICATED"));
                 return;
             }
 
             if (!DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_RUNNING"), col("GUNGAME_RUNNING"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_RUNNING"), Col("GUNGAME_RUNNING"));
                 return;
             }
 
-            foreach(SteamPlayer sp in Provider.clients)
+            foreach (SteamPlayer sp in Provider.clients)
             {
                 try
                 {
@@ -1808,33 +1818,33 @@ namespace NightFish.GunGame
                     player.Inventory.replaceItems(1, i);
                     ResetGame();
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Logger.LogError("Error enforcing start task for: " + sp.playerID + " Error: " + ex.Message);
                 }
             }
-            
-            
+
+
         }
 
         [RocketCommandAlias("ggstop")]
         [RocketCommand("gungamestop", "Stop a non-dedicated Gun Game round", "", AllowedCaller.Both)] //Stops a non-dedicated Gun Game round
-        public void ExecuteCommandGungamestop(IRocketPlayer caller, string[] parameters)
+        public void ExecuteCommandGungamestop(IRocketPlayer caller)
         {
-            if(DedicatedMode)
+            if (DedicatedMode)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_DEDICATED"), col("GUNGAME_DEDICATED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_DEDICATED"), Col("GUNGAME_DEDICATED"));
                 return;
             }
 
             if (DisableGungame)
             {
-                UnturnedChat.Say(caller, tra("GUNGAME_STOPPED"), col("GUNGAME_STOPPED"));
+                UnturnedChat.Say(caller, Tra("GUNGAME_STOPPED"), Col("GUNGAME_STOPPED"));
                 return;
             }
 
             DisableGungame = true;
-            foreach(SteamPlayer sp in Provider.clients)
+            foreach (SteamPlayer sp in Provider.clients)
             {
                 try
                 {
@@ -1844,9 +1854,9 @@ namespace NightFish.GunGame
                     player.Heal(100);
                     MinSkills(player);
                     player.Inventory.removeItem(0, 0);
-                    player.Inventory.removeItem(1, 0);                  
+                    player.Inventory.removeItem(1, 0);
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     Logger.LogError("Error enforcing stop task for: " + sp.playerID + " Error: " + ex.Message);
                 }
@@ -1856,10 +1866,10 @@ namespace NightFish.GunGame
             {
                 BarricadeManager.askClearAllBarricades();
                 StructureManager.askClearAllStructures();
-                Logger.LogWarning(tra("BARRIC_CLR"));
-                Logger.LogWarning(tra("STRUCT_CLR"));
+                Logger.LogWarning(Tra("BARRIC_CLR"));
+                Logger.LogWarning(Tra("STRUCT_CLR"));
             }
-            UnturnedChat.Say(tra("ROUND_END"), col("ROUND_END"));
+            UnturnedChat.Say(Tra("ROUND_END"), Col("ROUND_END"));
         }
 
         #endregion
