@@ -19,6 +19,9 @@ namespace NightFish.GunGame
 {
     public class GunGame : RocketPlugin
     {
+        public static GunGame Instance;
+        public static string PluginName = "GunGame";
+        public static string PluginVersion = "1.0.0";
         public float EastWall = 50;
         public float WestWall = -50;
         public float NorthWall = 50;
@@ -614,6 +617,11 @@ namespace NightFish.GunGame
 
         protected override void Load()
         {
+            if (Instance != null) { return; }
+            Instance = this;
+            Logger.Log("GunGame has been loaded!");
+            Logger.Log(PluginName + PluginVersion, ConsoleColor.Yellow);
+            Logger.Log("Made by Tortellio", ConsoleColor.Yellow);
             LoadTranslationDefaults();
             LoadTranslation();
             LoadConfig();
@@ -639,6 +647,9 @@ namespace NightFish.GunGame
 
         protected override void Unload()
         {
+            Instance = null;
+            Logger.Log("GunGame has been unloaded!");
+            Logger.Log("Visit Tortellio Discord for more! https://discord.gg/pzQwsew", ConsoleColor.Yellow);
             Rocket.Unturned.Events.UnturnedPlayerEvents.OnPlayerDeath -= PlayerDeath;
             Rocket.Unturned.Events.UnturnedPlayerEvents.OnPlayerRevive -= PlayerRespawn;
             U.Events.OnPlayerConnected -= PlayerJoin;
